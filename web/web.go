@@ -211,7 +211,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 }
 
 func (s *Server) initI18n(engine *gin.Engine) error {
-	bundle := i18n.NewBundle(language.SimplifiedChinese)
+	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	err := fs.WalkDir(i18nFS, "translation", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -235,11 +235,11 @@ func (s *Server) initI18n(engine *gin.Engine) error {
 		names := make([]string, 0)
 		keyLen := len(key)
 		for i := 0; i < keyLen-1; i++ {
-			if key[i:i+2] == "{{" { // 判断开头 "{{"
+			if key[i:i+2] == "{{" { // Check for opening "{{"
 				j := i + 2
 				isFind := false
 				for ; j < keyLen-1; j++ {
-					if key[j:j+2] == "}}" { // 结尾 "}}"
+					if key[j:j+2] == "}}" { // Check for closing "}}"
 						isFind = true
 						break
 					}
@@ -270,8 +270,8 @@ func (s *Server) initI18n(engine *gin.Engine) error {
 	}
 
 	engine.Use(func(c *gin.Context) {
-		accept := c.GetHeader("Accept-Language")
-		localizer = i18n.NewLocalizer(bundle, accept)
+		// Force English language, ignore browser Accept-Language header
+		localizer = i18n.NewLocalizer(bundle, "en-US")
 		c.Set("localizer", localizer)
 		c.Next()
 	})
@@ -284,18 +284,18 @@ func (s *Server) startTask() {
 	if err != nil {
 		logger.Warning("start xray failed:", err)
 	}
-	// 每 30 秒检查一次 xray 是否在运行
+	// Check every 30 seconds if xray is running
 	s.cron.AddJob("@every 30s", job.NewCheckXrayRunningJob())
 
 	go func() {
 		time.Sleep(time.Second * 5)
-		// 每 10 秒统计一次流量，首次启动延迟 5 秒，与重启 xray 的时间错开
+		// Count traffic every 10 seconds, delayed 5 seconds on first start to avoid conflict with xray restart
 		s.cron.AddJob("@every 10s", job.NewXrayTrafficJob())
 	}()
 
-	// 每 30 秒检查一次 inbound 流量超出和到期的情况
+	// Check every 30 seconds for inbound traffic overflow and expiration
 	s.cron.AddJob("@every 30s", job.NewCheckInboundJob())
-	// 每一天提示一次流量情况,上海时间8点30
+	// Daily traffic notification, scheduled time based on configuration
 	var entry cron.EntryID
 	isTgbotenabled, err := s.settingService.GetTgbotenabled()
 	if (err == nil) && (isTgbotenabled) {
@@ -316,7 +316,7 @@ func (s *Server) startTask() {
 }
 
 func (s *Server) Start() (err error) {
-	//这是一个匿名函数，没没有函数名
+	// This is an anonymous function with no function name
 	defer func() {
 		if err != nil {
 			s.Stop()
