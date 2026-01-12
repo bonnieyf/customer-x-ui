@@ -103,46 +103,75 @@ config_after_install() {
 }
 
 install_x-ui() {
-    systemctl stop x-ui
-    cd /usr/local/
+    # systemctl stop x-ui
+    # cd /usr/local/
 
-    if [ $# == 0 ]; then
-        last_version=$(curl -Ls "https://api.github.com/repos/bonnieyf/customer-x-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-        if [[ ! -n "$last_version" ]]; then
-            echo -e "${red}Failed to detect x-ui version. It might have exceeded GitHub API limits. Please try again later or specify a version manually.${plain}"
-            exit 1
-        fi
-        echo -e "Latest x-ui version detected: ${last_version}, starting installation"
-        wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz https://github.com/vaxilu/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}Download x-ui failed. Please ensure your server can access GitHub files.${plain}"
-            exit 1
-        fi
-    else
-        last_version=$1
-        url="https://github.com/vaxilu/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
-        echo -e "Starting installation of x-ui v$1"
-        wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}Download x-ui v$1 failed. Please ensure this version exists.${plain}"
-            exit 1
-        fi
-    fi
+    # if [ $# == 0 ]; then
+    #     last_version=$(curl -Ls "https://api.github.com/repos/bonnieyf/customer-x-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    #     if [[ ! -n "$last_version" ]]; then
+    #         echo -e "${red}Failed to detect x-ui version. It might have exceeded GitHub API limits. Please try again later or specify a version manually.${plain}"
+    #         exit 1
+    #     fi
+    #     echo -e "Latest x-ui version detected: ${last_version}, starting installation"
+    #     wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz https://github.com/vaxilu/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz
+    #     if [[ $? -ne 0 ]]; then
+    #         echo -e "${red}Download x-ui failed. Please ensure your server can access GitHub files.${plain}"
+    #         exit 1
+    #     fi
+    # else
+    #     last_version=$1
+    #     url="https://github.com/vaxilu/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
+    #     echo -e "Starting installation of x-ui v$1"
+    #     wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
+    #     if [[ $? -ne 0 ]]; then
+    #         echo -e "${red}Download x-ui v$1 failed. Please ensure this version exists.${plain}"
+    #         exit 1
+    #     fi
+    # fi
 
-    if [[ -e /usr/local/x-ui/ ]]; then
-        rm /usr/local/x-ui/ -rf
-    fi
+    # if [[ -e /usr/local/x-ui/ ]]; then
+    #     rm /usr/local/x-ui/ -rf
+    # fi
 
-    tar zxvf x-ui-linux-${arch}.tar.gz
-    rm x-ui-linux-${arch}.tar.gz -f
-    cd x-ui
-    chmod +x x-ui bin/xray-linux-${arch}
+    # tar zxvf x-ui-linux-${arch}.tar.gz
+    # rm x-ui-linux-${arch}.tar.gz -f
+    # cd x-ui
+    # chmod +x x-ui bin/xray-linux-${arch}
+    # cp -f x-ui.service /etc/systemd/system/
+    # wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/x-ui.sh
+    # chmod +x /usr/local/x-ui/x-ui.sh
+    # chmod +x /usr/bin/x-ui
+    # config_after_install
+    
+    # systemctl daemon-reload
+    # systemctl enable x-ui
+    # systemctl start x-ui
+    # 1. 停止舊服務
+    systemctl stop x-ui 2>/dev/null 
+
+    # 2. 建立安裝目錄
+    mkdir -p /usr/local/x-ui
+
+    # 3. 直接從你當前的 git 目錄複製檔案到安裝目錄
+    # 假設你目前在 /customer-x-ui 資料夾執行腳本
+    cp -r ./* /usr/local/x-ui/
+
+    # 4. 進入安裝目錄設定權限
+    cd /usr/local/x-ui
+    chmod +x x-ui bin/xray-linux-amd64 # 確保執行檔有權限
+
+    # 5. 複製服務設定檔
     cp -f x-ui.service /etc/systemd/system/
-    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/x-ui.sh
-    chmod +x /usr/local/x-ui/x-ui.sh
+    
+    # 6. 設定管理腳本連結
+    cp -f x-ui.sh /usr/bin/x-ui
     chmod +x /usr/bin/x-ui
+    chmod +x /usr/local/x-ui/x-ui.sh
+
+    # 7. 執行安裝後的帳密設定
     config_after_install
     
+    # 注意：在 Docker 中以下 systemctl 指令會失敗，稍後需手動啟動
     systemctl daemon-reload
     systemctl enable x-ui
     systemctl start x-ui
