@@ -1,0 +1,19 @@
+services:
+  x-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: x-ui-dev-new
+    restart: unless-stopped
+    ports:
+      # Web 管理界面端口
+      - "54321:54321"
+    volumes:
+      # 映射前端文件 - 修改後即時生效
+      - ./web/html:/root/web/html:ro
+      - ./web/assets:/root/web/assets:ro
+      # 數據持久化
+      - ./data:/etc/x-ui
+    environment:
+      # 設置為 debug 模式以啟用開發特性（讓前端文件從磁盤加載）
+      - XUI_DEBUG=true
