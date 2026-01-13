@@ -103,44 +103,46 @@ config_after_install() {
 }
 
 install_x-ui() {
-    # 0. 從原始碼編譯
-    echo -e "${yellow}正在從原始碼編譯 x-ui...${plain}"
-    if ! command -v go &> /dev/null; then
-        echo -e "${red}錯誤: 未偵測到 Go 環境，請先安裝 Go 1.21 或以上版本。${plain}"
-        exit 1
+    systemctl stop x-ui
+    cd /usr/local/
+
+    if [ $# == 0 ]; then
+        last_version=$(curl -Ls "https://api.github.com/repos/bonnieyf/customer-x-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [[ ! -n "$last_version" ]]; then
+            echo -e "${red}Failed to detect x-ui version. It might have exceeded GitHub API limits. Please try again later or specify a version manually.${plain}"
+            exit 1
+        fi
+        echo -e "Latest x-ui version detected: ${last_version}, starting installation"
+        wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz https://github.com/bonnieyf/customer-x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz
+        if [[ $? -ne 0 ]]; then
+            echo -e "${red}Download x-ui failed. Please ensure your server can access GitHub files.${plain}"
+            exit 1
+        fi
+    else
+        last_version=$1
+        url="https://github.com/bonnieyf/customer-x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
+        echo -e "Starting installation of x-ui v$1"
+        wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
+        if [[ $? -ne 0 ]]; then
+            echo -e "${red}Download x-ui v$1 failed. Please ensure this version exists.${plain}"
+            exit 1
+        fi
     fi
 
-    # 執行編譯
-    go mod tidy
-    go build -o x-ui main.go
-
-    if [ ! -f "x-ui" ]; then
-        echo -e "${red}編譯失敗！請檢查程式碼。${plain}"
-        exit 1
+    if [[ -e /usr/local/x-ui/ ]]; then
+        rm /usr/local/x-ui/ -rf
     fi
-    echo -e "${green}編譯成功！${plain}"
 
-    # 1. 停止舊服務並清理目錄
-    systemctl stop x-ui 2>/dev/null 
-    mkdir -p /usr/local/x-ui
-
-    # 2. 直接從目前的 git 目錄複製檔案到安裝目錄
-    cp -r ./* /usr/local/x-ui/
-
-    # 3. 進入安裝目錄設定權限
-    cd /usr/local/x-ui
-    chmod +x x-ui bin/xray-linux-amd64 
-
-    # 4. 複製服務設定檔與管理腳本
+    tar zxvf x-ui-linux-${arch}.tar.gz
+    rm x-ui-linux-${arch}.tar.gz -f
+    cd x-ui
+    chmod +x x-ui bin/xray-linux-${arch}
     cp -f x-ui.service /etc/systemd/system/
-    cp -f x-ui.sh /usr/bin/x-ui
-    chmod +x /usr/bin/x-ui
+    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/x-ui.sh
     chmod +x /usr/local/x-ui/x-ui.sh
-
-    # 5. 執行安裝後的帳密設定
+    chmod +x /usr/bin/x-ui
     config_after_install
     
-    # 注意：在 Docker 中以下 systemctl 指令會失敗，稍後需手動啟動
     systemctl daemon-reload
     systemctl enable x-ui
     systemctl start x-ui

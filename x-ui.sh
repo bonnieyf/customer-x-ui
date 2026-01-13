@@ -5,7 +5,7 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-# Add some basic function here
+# Add some basic functions here
 function LOGD() {
     echo -e "${yellow}[DEG] $* ${plain}"
 }
@@ -19,7 +19,7 @@ function LOGI() {
 }
 
 # check root
-[[ $EUID -ne 0 ]] && LOGE "Error: Must be run as root user!\n" && exit 1
+[[ $EUID -ne 0 ]] && LOGE "Error: You must run this script as root!\n" && exit 1
 
 # check os
 if [[ -f /etc/redhat-release ]]; then
@@ -52,15 +52,15 @@ fi
 
 if [[ x"${release}" == x"centos" ]]; then
     if [[ ${os_version} -le 6 ]]; then
-        LOGE "Please use CentOS 7 or higher!\n" && exit 1
+        LOGE "Please use CentOS 7 or a higher version!\n" && exit 1
     fi
 elif [[ x"${release}" == x"ubuntu" ]]; then
     if [[ ${os_version} -lt 16 ]]; then
-        LOGE "Please use Ubuntu 16 or higher!\n" && exit 1
+        LOGE "Please use Ubuntu 16 or a higher version!\n" && exit 1
     fi
 elif [[ x"${release}" == x"debian" ]]; then
     if [[ ${os_version} -lt 8 ]]; then
-        LOGE "Please use Debian 8 or higher!\n" && exit 1
+        LOGE "Please use Debian 8 or a higher version!\n" && exit 1
     fi
 fi
 
@@ -81,7 +81,7 @@ confirm() {
 }
 
 confirm_restart() {
-    confirm "Restart the panel? This will also restart xray" "y"
+    confirm "Restart the panel? (This will also restart xray)" "y"
     if [[ $? == 0 ]]; then
         restart
     else
@@ -95,7 +95,8 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh)
+    # Modified to your repository link
+    bash <(curl -Ls https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -106,7 +107,7 @@ install() {
 }
 
 update() {
-    confirm "This will force reinstall the latest version. Data will not be lost. Continue?" "n"
+    confirm "This will force a reinstallation of the latest version. Data will not be lost. Continue?" "n"
     if [[ $? != 0 ]]; then
         LOGE "Cancelled"
         if [[ $# == 0 ]]; then
@@ -114,7 +115,8 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh)
+    # Modified to your repository link
+    bash <(curl -Ls https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update complete, panel restarted automatically"
         exit 0
@@ -138,7 +140,7 @@ uninstall() {
     rm /usr/local/x-ui/ -rf
 
     echo ""
-    echo -e "Uninstall successful. To delete this script, run ${green}rm /usr/bin/x-ui -f${plain} after exiting."
+    echo -e "Uninstall successful. If you want to delete this script, run ${green}rm /usr/bin/x-ui -f${plain} after exiting."
     echo ""
 
     if [[ $# == 0 ]]; then
@@ -147,7 +149,7 @@ uninstall() {
 }
 
 reset_user() {
-    confirm "Reset username and password to 'admin'?" "n"
+    confirm "Are you sure you want to reset the username and password to 'admin'?" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
             show_menu
@@ -155,12 +157,12 @@ reset_user() {
         return 0
     fi
     /usr/local/x-ui/x-ui setting -username admin -password admin
-    echo -e "Username and password reset to ${green}admin${plain}. Please restart the panel."
+    echo -e "Username and password reset to ${green}admin${plain}, please restart the panel now."
     confirm_restart
 }
 
 reset_config() {
-    confirm "Reset all panel settings? Account data will not be lost, but username/password will stay the same." "n"
+    confirm "Are you sure you want to reset all panel settings? Account data will not be lost." "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
             show_menu
@@ -168,7 +170,7 @@ reset_config() {
         return 0
     fi
     /usr/local/x-ui/x-ui setting -reset
-    echo -e "All settings reset to default. Please restart and use port ${green}54321${plain} to access the panel."
+    echo -e "All panel settings reset to default values. Please restart the panel and use port ${green}54321${plain} to access."
     confirm_restart
 }
 
@@ -188,7 +190,7 @@ set_port() {
         before_show_menu
     else
         /usr/local/x-ui/x-ui setting -port ${port}
-        echo -e "Port set. Please restart and use port ${green}${port}${plain} to access the panel."
+        echo -e "Port setting complete. Please restart the panel and use port ${green}${port}${plain} to access."
         confirm_restart
     fi
 }
@@ -205,7 +207,7 @@ start() {
         if [[ $? == 0 ]]; then
             LOGI "x-ui started successfully"
         else
-            LOGE "Failed to start panel. It might have taken too long, please check logs."
+            LOGE "Panel failed to start. It might have taken too long; check logs later."
         fi
     fi
 
@@ -226,7 +228,7 @@ stop() {
         if [[ $? == 1 ]]; then
             LOGI "x-ui and xray stopped successfully"
         else
-            LOGE "Failed to stop panel, please check logs."
+            LOGE "Panel failed to stop. It might have taken too long; check logs later."
         fi
     fi
 
@@ -242,7 +244,7 @@ restart() {
     if [[ $? == 0 ]]; then
         LOGI "x-ui and xray restarted successfully"
     else
-        LOGE "Failed to restart panel, please check logs."
+        LOGE "Panel failed to restart. It might have taken too long; check logs later."
     fi
     if [[ $# == 0 ]]; then
         before_show_menu
@@ -261,7 +263,7 @@ enable() {
     if [[ $? == 0 ]]; then
         LOGI "x-ui set to start on boot successfully"
     else
-        LOGE "Failed to set x-ui to start on boot"
+        LOGE "x-ui failed to set start on boot"
     fi
 
     if [[ $# == 0 ]]; then
@@ -272,9 +274,9 @@ enable() {
 disable() {
     systemctl disable x-ui
     if [[ $? == 0 ]]; then
-        LOGI "x-ui disabled from starting on boot successfully"
+        LOGI "x-ui boot start disabled successfully"
     else
-        LOGE "Failed to disable x-ui from starting on boot"
+        LOGE "x-ui failed to disable boot start"
     fi
 
     if [[ $# == 0 ]]; then
@@ -291,6 +293,7 @@ show_log() {
 
 migrate_v2_ui() {
     /usr/local/x-ui/x-ui v2-ui
+
     before_show_menu
 }
 
@@ -302,14 +305,15 @@ install_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/vaxilu/x-ui/raw/master/x-ui.sh
+    # Modified to your repository link
+    wget -O /usr/bin/x-ui -N --no-check-certificate https://raw.githubusercontent.com/bonnieyf/customer-x-ui/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
-        LOGE "Failed to download script, please check your Github connection"
+        LOGE "Download failed, please check if the machine can connect to GitHub"
         before_show_menu
     else
         chmod +x /usr/bin/x-ui
-        LOGI "Script updated successfully, please run it again" && exit 0
+        LOGI "Script updated successfully, please run the script again" && exit 0
     fi
 }
 
@@ -339,7 +343,7 @@ check_uninstall() {
     check_status
     if [[ $? != 2 ]]; then
         echo ""
-        LOGE "Panel is already installed, do not install again"
+        LOGE "Panel is already installed, do not reinstall"
         if [[ $# == 0 ]]; then
             before_show_menu
         fi
@@ -371,7 +375,7 @@ show_status() {
         show_enable_status
         ;;
     1)
-        echo -e "Panel Status: ${yellow}Not Running${plain}"
+        echo -e "Panel Status: ${yellow}Stopped${plain}"
         show_enable_status
         ;;
     2)
@@ -384,9 +388,9 @@ show_status() {
 show_enable_status() {
     check_enabled
     if [[ $? == 0 ]]; then
-        echo -e "Start on Boot: ${green}Yes${plain}"
+        echo -e "Start on boot: ${green}Yes${plain}"
     else
-        echo -e "Start on Boot: ${red}No${plain}"
+        echo -e "Start on boot: ${red}No${plain}"
     fi
 }
 
@@ -404,19 +408,19 @@ show_xray_status() {
     if [[ $? == 0 ]]; then
         echo -e "xray Status: ${green}Running${plain}"
     else
-        echo -e "xray Status: ${red}Not Running${plain}"
+        echo -e "xray Status: ${red}Stopped${plain}"
     fi
 }
 
 ssl_cert_issue() {
     echo -E ""
     LOGD "****** Instructions ******"
-    LOGI "This script uses Acme to apply for a certificate. Ensure:"
-    LOGI "1. You have your Cloudflare registered email."
-    LOGI "2. You have your Cloudflare Global API Key."
-    LOGI "3. Your domain is resolved to this server via Cloudflare."
-    LOGI "4. Default installation path is /root/cert"
-    confirm "I have confirmed the above" "y"
+    LOGI "This script uses Acme to apply for certificates. Ensure:"
+    LOGI "1. You know your Cloudflare registered email."
+    LOGI "2. You know your Cloudflare Global API Key."
+    LOGI "3. Domain points to this server via Cloudflare."
+    LOGI "4. Default certificate path is /root/cert directory."
+    confirm "I have confirmed the above [y/n]" "y"
     if [ $? -eq 0 ]; then
         cd ~
         LOGI "Installing Acme script"
@@ -441,19 +445,19 @@ ssl_cert_issue() {
         LOGD "Set API Key:"
         read -p "Input your key here:" CF_GlobalKey
         LOGD "API Key set to: ${CF_GlobalKey}"
-        LOGD "Set registration email:"
+        LOGD "Set registered email:"
         read -p "Input your email here:" CF_AccountEmail
         LOGD "Email set to: ${CF_AccountEmail}"
         ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
         if [ $? -ne 0 ]; then
-            LOGE "Failed to set default CA to Let's Encrypt, exiting script"
+            LOGE "Failed to change default CA to LetsEncrypt, script exiting"
             exit 1
         fi
         export CF_Key="${CF_GlobalKey}"
         export CF_Email=${CF_AccountEmail}
         ~/.acme.sh/acme.sh --issue --dns dns_cf -d ${CF_Domain} -d *.${CF_Domain} --log
         if [ $? -ne 0 ]; then
-            LOGE "Certificate issue failed, exiting script"
+            LOGE "Certificate issuance failed, script exiting"
             exit 1
         else
             LOGI "Certificate issued successfully, installing..."
@@ -462,19 +466,19 @@ ssl_cert_issue() {
         --cert-file /root/cert/${CF_Domain}.cer --key-file /root/cert/${CF_Domain}.key \
         --fullchain-file /root/cert/fullchain.cer
         if [ $? -ne 0 ]; then
-            LOGE "Certificate installation failed, exiting script"
+            LOGE "Certificate installation failed, script exiting"
             exit 1
         else
-            LOGI "Certificate installed, enabling auto-update..."
+            LOGI "Certificate installed successfully, enabling auto-renewal..."
         fi
         ~/.acme.sh/acme.sh --upgrade --auto-upgrade
         if [ $? -ne 0 ]; then
-            LOGE "Auto-update setting failed, exiting script"
+            LOGE "Auto-renewal setup failed, script exiting"
             ls -lah cert
             chmod 755 $certPath
             exit 1
         else
-            LOGI "Certificate installed and auto-update enabled. Details below:"
+            LOGI "Cert installed and auto-renewal enabled. Details:"
             ls -lah cert
             chmod 755 $certPath
         fi
@@ -484,51 +488,51 @@ ssl_cert_issue() {
 }
 
 show_usage() {
-    echo "x-ui management script usage: "
+    echo "x-ui Management Script Usage: "
     echo "------------------------------------------"
-    echo "x-ui              - Show management menu (more features)"
-    echo "x-ui start        - Start x-ui panel"
-    echo "x-ui stop         - Stop x-ui panel"
-    echo "x-ui restart      - Restart x-ui panel"
-    echo "x-ui status       - Check x-ui status"
-    echo "x-ui enable       - Set x-ui to start on boot"
-    echo "x-ui disable      - Disable x-ui from starting on boot"
-    echo "x-ui log          - Check x-ui logs"
-    echo "x-ui v2-ui        - Migrate v2-ui data to x-ui"
-    echo "x-ui update       - Update x-ui panel"
-    echo "x-ui install      - Install x-ui panel"
-    echo "x-ui uninstall    - Uninstall x-ui panel"
+    echo "x-ui               - Show management menu (more features)"
+    echo "x-ui start         - Start x-ui panel"
+    echo "x-ui stop          - Stop x-ui panel"
+    echo "x-ui restart       - Restart x-ui panel"
+    echo "x-ui status        - View x-ui status"
+    echo "x-ui enable        - Enable x-ui start on boot"
+    echo "x-ui disable       - Disable x-ui start on boot"
+    echo "x-ui log           - View x-ui logs"
+    echo "x-ui v2-ui         - Migrate v2-ui data to x-ui"
+    echo "x-ui update        - Update x-ui panel"
+    echo "x-ui install       - Install x-ui panel"
+    echo "x-ui uninstall     - Uninstall x-ui panel"
     echo "------------------------------------------"
 }
 
 show_menu() {
     echo -e "
   ${green}x-ui Panel Management Script${plain}
-  ${green}0.${plain} Exit script
+  ${green}0.${plain} Exit Script
 ————————————————
   ${green}1.${plain} Install x-ui
   ${green}2.${plain} Update x-ui
   ${green}3.${plain} Uninstall x-ui
 ————————————————
-  ${green}4.${plain} Reset user and password
+  ${green}4.${plain} Reset username/password
   ${green}5.${plain} Reset panel settings
   ${green}6.${plain} Set panel port
-  ${green}7.${plain} Check current panel settings
+  ${green}7.${plain} View current panel settings
 ————————————————
   ${green}8.${plain} Start x-ui
   ${green}9.${plain} Stop x-ui
   ${green}10.${plain} Restart x-ui
-  ${green}11.${plain} Check x-ui status
-  ${green}12.${plain} Check x-ui logs
+  ${green}11.${plain} View x-ui status
+  ${green}12.${plain} View x-ui logs
 ————————————————
-  ${green}13.${plain} Set x-ui to start on boot
-  ${green}14.${plain} Disable x-ui from starting on boot
+  ${green}13.${plain} Enable start on boot
+  ${green}14.${plain} Disable start on boot
 ————————————————
-  ${green}15.${plain} Install BBR (Latest kernel)
-  ${green}16.${plain} Apply for SSL certificate (via Acme)
+  ${green}15.${plain} One-click install BBR (latest kernel)
+  ${green}16.${plain} One-click apply for SSL Cert (Acme)
  "
     show_status
-    echo && read -p "Please enter a choice [0-16]: " num
+    echo && read -p "Please enter choice [0-16]: " num
 
     case "${num}" in
     0)
