@@ -27,23 +27,12 @@
     }
 
 </style>
-<style scoped>
-.bonding-logo {
-  width: 170px;
-  height: 70px;
-  /* 將 SVG 作為背景圖片 */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 70'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%230052D4;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%234361EE;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M15 20 L30 35 L15 50 M25 20 L40 35 L25 50' fill='none' stroke='url(%23grad)' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ctext x='55' y='45' font-family='Arial, sans-serif' font-size='22' font-weight='bold' fill='%23333'%3EBONDING%3C/text%3E%3Ctext x='55' y='62' font-family='Arial, sans-serif' font-size='10' font-weight='normal' fill='%23666' letter-spacing='1'%3EACCELERATION%3C/text%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-}
-</style>
 <body>
 <a-layout id="app" v-cloak>
     <transition name="list" appear>
         <a-layout-content>
             <a-row type="flex" justify="center">
-                <div class="bonding-logo"></div>
+                <img src="./logo.svg" style="width: 170px; height: 70px;" alt="Bonding Logo">
             </a-row>
             <a-row type="flex" justify="center">
                 <a-col :xs="22" :sm="20" :md="16" :lg="12" :xl="8">
